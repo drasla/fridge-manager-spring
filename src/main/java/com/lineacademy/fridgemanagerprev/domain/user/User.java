@@ -1,5 +1,6 @@
 package com.lineacademy.fridgemanagerprev.domain.user;
 
+import com.lineacademy.fridgemanagerprev.domain.category.Category;
 import com.lineacademy.fridgemanagerprev.domain.common.BaseTimeEntity;
 import com.lineacademy.fridgemanagerprev.domain.enums.RoleType;
 import com.lineacademy.fridgemanagerprev.domain.fridge.Fridge;
@@ -45,6 +46,9 @@ public class User extends BaseTimeEntity {
     // cascade는, 연결지은 이 user가 삭제될 경우 연결될 fridge는 어떻게 할까?
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Fridge> fridges = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Category> categories = new ArrayList<>();
 
     @Builder
     private User(String nickname, String password, String email, LocalDateTime birthdate, RoleType role) {
