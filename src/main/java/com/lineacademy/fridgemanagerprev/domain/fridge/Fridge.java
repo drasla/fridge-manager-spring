@@ -2,10 +2,14 @@ package com.lineacademy.fridgemanagerprev.domain.fridge;
 
 import com.lineacademy.fridgemanagerprev.domain.common.BaseTimeEntity;
 import com.lineacademy.fridgemanagerprev.domain.user.User;
+import com.lineacademy.fridgemanagerprev.product.Product;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "fridge")
@@ -21,6 +25,9 @@ public class Fridge extends BaseTimeEntity {
     @ManyToOne()
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy = "fridge", cascade = CascadeType.ALL)
+    private List<Product> products = new ArrayList<>();
 
     @Builder
     public Fridge(String name) {
