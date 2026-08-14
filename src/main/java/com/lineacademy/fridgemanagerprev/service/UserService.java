@@ -5,6 +5,7 @@ import com.lineacademy.fridgemanagerprev.domain.user.User;
 import com.lineacademy.fridgemanagerprev.dto.user.request.CreateUserRequest;
 import com.lineacademy.fridgemanagerprev.dto.user.request.LoginRequest;
 import com.lineacademy.fridgemanagerprev.dto.user.request.UpdateUserRequest;
+import com.lineacademy.fridgemanagerprev.dto.user.request.WithdrawUserRequest;
 import com.lineacademy.fridgemanagerprev.repository.FridgeRepository;
 import com.lineacademy.fridgemanagerprev.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -126,5 +127,21 @@ public class UserService {
         return user;
         // repository에서 가져온 내용을 할당한 user 객체의 값이 변경된 상태에서 메서드 실행이 끝나면
         // 자동으로 디비의 값도 업데이트 함 => Dirty Check
+    }
+
+    public void withdrawUser(Long userId, WithdrawUserRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
+
+        if (user.getDeletedAt() != null) {
+            throw new RuntimeException("USER_NOT_FOUND");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("INVALID_CREDENTIALS");
+        }
+
+        // 소프트삭제 -> deletedAt 시간을 넣고 업데이트
+        user.markAsDeleted();
     }
 }
