@@ -3,8 +3,10 @@ package com.lineacademy.fridgemanagerprev.service;
 import com.lineacademy.fridgemanagerprev.domain.fridge.Fridge;
 import com.lineacademy.fridgemanagerprev.domain.user.User;
 import com.lineacademy.fridgemanagerprev.dto.user.request.CreateUserRequest;
+import com.lineacademy.fridgemanagerprev.dto.user.request.LoginRequest;
 import com.lineacademy.fridgemanagerprev.repository.FridgeRepository;
 import com.lineacademy.fridgemanagerprev.repository.UserRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,12 +32,12 @@ public class UserService {
 
         // 이러한 구조에서 데이터베이스 등의 저장소에 접근하는 기능 모음 클래스들을 "레포지토리(repository)"라고 함
 
-        // 이메일 중복 체크
+        // 이메일 중복 체크 => 이메일로 검색
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("ALREADY_EXISTS_EMAIL");
         }
 
-        // 닉네임 중복 체크
+        // 닉네임 중복 체크 => 닉네임으로 검색
         if (userRepository.existsByNickname(request.getNickname())) {
             throw new IllegalArgumentException("ALREADY_EXISTS_NICKNAME");
         }
@@ -49,12 +51,13 @@ public class UserService {
 
         // 사용자 정보를 데이터베이스 저장
         // 1. 사용자 저장
-        User user = User.builder()
-                .nickname(request.getNickname())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .email(request.getEmail())
-                .birthdate(parsedBirthdate)
-                .build();
+        User user =
+                User.builder()
+                        .nickname(request.getNickname())
+                        .password(passwordEncoder.encode(request.getPassword()))
+                        .email(request.getEmail())
+                        .birthdate(parsedBirthdate)
+                        .build();
         userRepository.save(user);
 
         // 2. 기본 냉장고 저장
@@ -63,6 +66,27 @@ public class UserService {
                 .user(user)
                 .build();
         fridgeRepository.save(defaultFridge);
+
+        return user;
+    }
+
+    public User login(LoginRequest request) {
+        // 1. 받아온 email값을 통해 사용자가 있는지 확인하고
+        // 함수처럼 만들어서 쓸 수 있는게 Java에서 지원되지만 함수는 아니고
+        // 람다 표현식 () ->
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("INVALID_CREDENTIALS"));
+
+        // 2. 사용자가 존재한다면, 탈퇴된 회원인지를 검사하고
+        if (user.getDeletedAt() != null) {
+            throw new RuntimeException("INVALID_CREDENTIALS");
+        }
+
+        // 3. 비밀번호가 일치하는지 확인하고
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("INVALID_CREDENTIALS");
+        }
+
 
         return user;
     }
